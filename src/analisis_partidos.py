@@ -99,8 +99,7 @@ def obten_torneos(partidos: list[Partido]) -> set[str]:
     Devuelve:
     set[str]: Conjunto de torneos distintos.
     """
-    # TODO: Ejercicio 1
-    pass
+    return {p.tournament for p in partidos}
 
 def busca_partido_con_mas_goles(partidos: list[Partido], torneo: str) -> Partido | None:
     """
@@ -114,8 +113,8 @@ def busca_partido_con_mas_goles(partidos: list[Partido], torneo: str) -> Partido
     Devuelve:
     Partido | None: Partido con más goles del torneo, o None si no hay partidos de ese torneo.
     """
-    # TODO: Ejercicio 2
-    pass
+    partidos_del_torneo = (p for p in partidos if p.tournament == torneo)
+    return max(partidos_del_torneo, key = lambda p:p.home_score+p.away_score, default= None)
 
 def busca_ultimos_partidos_de_seleccion(partidos: list[Partido], seleccion: str) -> list[Partido]:
     """
@@ -130,8 +129,7 @@ def busca_ultimos_partidos_de_seleccion(partidos: list[Partido], seleccion: str)
     Devuelve:
     list[Partido]: Lista con los últimos 5 partidos de la selección.
     """
-    # TODO: Ejercicio 3
-    pass
+    return sorted((p for p in partidos if (p.away_team == seleccion or p.home_team == seleccion)), key = lambda p: p.date)[-5:]
 
 def calcula_goles_marcados(partidos: list[Partido], seleccion: str) -> int:
     """
@@ -145,8 +143,7 @@ def calcula_goles_marcados(partidos: list[Partido], seleccion: str) -> int:
     Devuelve:
     int: Total de goles marcados por la selección.
     """
-    # TODO: Ejercicio 4
-    pass
+    return sum(goles_a_favor(p, seleccion) for p in partidos if juega(p, seleccion))
 
 def calcula_goles_marcados_2(partidos: list[Partido], seleccion: str) -> int:
     """
@@ -160,8 +157,7 @@ def calcula_goles_marcados_2(partidos: list[Partido], seleccion: str) -> int:
     Devuelve:
     int: Total de goles marcados por la selección.
     """
-    # TODO: Ejercicio 5
-    pass
+    return sum(list(map(lambda p: goles_a_favor(p, seleccion),filter(lambda p: juega(p, seleccion), partidos))))
 
 def ha_ganado_todos(partidos: list[Partido], seleccion: str, torneo: str, año: int) -> bool:
     """
@@ -178,8 +174,8 @@ def ha_ganado_todos(partidos: list[Partido], seleccion: str, torneo: str, año: 
     Devuelve:
     bool: True si la selección ganó todos sus partidos del torneo en ese año, False en caso contrario.
     """
-    # TODO: Ejercicio 6
-    pass
+    return all(goles_a_favor(p, seleccion)>goles_en_contra(p, seleccion) for p in partidos if juega(p, seleccion) and (p.date.year == año) and p.tournament == torneo)
+
 
 def busca_seleccion_con_mas_goles(partidos: list[Partido]) -> tuple[str, int] | None:
     """
@@ -193,9 +189,14 @@ def busca_seleccion_con_mas_goles(partidos: list[Partido]) -> tuple[str, int] | 
     Devuelve:
     tuple[str, int] | None: Selección con más goles y su total, o None si no hay partidos.
     """
-    # TODO: Ejercicio 7
-    pass
-
+    s = defaultdict(int)
+    for p in partidos:
+        s[p.home_team] += p.home_score
+        s[p.away_team] += p.away_score
+    if partidos == []:
+        return None
+    grupo = max(s, key=s.get)
+    return grupo, s[grupo]
 
 def ha_ganado_alguna_vez(partidos: list[Partido], seleccion: str, rival: str) -> bool:
     """
@@ -209,8 +210,7 @@ def ha_ganado_alguna_vez(partidos: list[Partido], seleccion: str, rival: str) ->
     Devuelve:
     bool: True si la selección ha ganado al rival en al menos un partido, False en caso contrario.
     """
-    # TODO: Ejercicio 8
-    pass
+    return any(goles_a_favor(p, seleccion) > goles_a_favor(p, rival) for p in partidos if juega(p, seleccion) and juega(p, rival))
 
 def busca_primera_victoria(partidos: list[Partido], seleccion: str) -> Partido | None:
     """
@@ -224,8 +224,7 @@ def busca_primera_victoria(partidos: list[Partido], seleccion: str) -> Partido |
     Devuelve:
     Partido | None: Primera victoria de la selección, o None si no ha ganado ningún partido.
     """
-    # TODO: Ejercicio 9
-    pass
+    return min((p for p in partidos if juega(p, seleccion) and (goles_a_favor(p, seleccion)>goles_en_contra(p, seleccion))), key =lambda p: p.date, default = None)
 
 def busca_mayores_goleadas(partidos: list[Partido], seleccion: str, n: int = 5) -> list[Partido]:
     """
@@ -241,8 +240,12 @@ def busca_mayores_goleadas(partidos: list[Partido], seleccion: str, n: int = 5) 
     Devuelve:
     list[Partido]: Lista con las n mayores goleadas conseguidas por la selección.
     """
-    # TODO: Ejercicio 10
-    pass
+    return sorted((p for p in partidos if juega(p, seleccion) 
+                   and (goles_a_favor(p, seleccion) > goles_en_contra(p, seleccion))), 
+                   key = lambda p: (goles_a_favor(p, seleccion)-goles_en_contra(p, seleccion), 
+                                    goles_a_favor(p, seleccion), 
+                                    p.date), 
+                   reverse = True)[:n]
 
 def calcula_media_goles_por_edicion(partidos: list[Partido], torneo: str) -> dict[int, float]:
     """
@@ -257,8 +260,9 @@ def calcula_media_goles_por_edicion(partidos: list[Partido], torneo: str) -> dic
     Devuelve:
     dict[int, float]: Diccionario con la media de goles por partido de cada año del torneo.
     """
-    # TODO: Ejercicio 11
-    pass
+    return {año: sum(p.home_score + p.away_score for p in partidos if p.tournament == torneo and p.date.year == año)
+            / len([p for p in partidos if p.tournament == torneo and p.date.year == año]) 
+            for año in (p.date.year for p in (p for p in partidos if p.tournament==torneo))}
 
 def cuenta_partidos_por_pais_sede(partidos: list[Partido], torneo: str) -> Counter:
     """
@@ -271,8 +275,7 @@ def cuenta_partidos_por_pais_sede(partidos: list[Partido], torneo: str) -> Count
     Devuelve:
     Counter: Contador con el número de partidos del torneo jugados en cada país.
     """
-    # TODO: Ejercicio 12
-    pass
+    return Counter(p.country for p in partidos if p.tournament == torneo)
 
 def filtra_partidos(partidos: list[Partido], condicion) -> list[Partido]:
     """
@@ -285,8 +288,7 @@ def filtra_partidos(partidos: list[Partido], condicion) -> list[Partido]:
     Devuelve:
     list[Partido]: Lista con los partidos para los que la condición devuelve True.
     """
-    # TODO: Ejercicio 13
-    pass
+    return ([p for p in partidos if condicion(p) == True])
 
 def aplica_a_partidos_de_seleccion(partidos: list[Partido], seleccion: str, funcion) -> list:
     """
@@ -301,5 +303,4 @@ def aplica_a_partidos_de_seleccion(partidos: list[Partido], seleccion: str, func
     Devuelve:
     list: Lista con los resultados de aplicar la función a cada partido de la selección.
     """
-    # TODO: Ejercicio 14
-    pass
+    return list((map(lambda p: funcion(p, seleccion), filter(lambda p: juega(p, seleccion), partidos))))
